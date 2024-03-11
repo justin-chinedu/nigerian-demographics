@@ -10,20 +10,16 @@ let headersList = {
 
 async function fetchData(state_id, lga_id, ward_id) {
   let bodyContent = new FormData();
+  let script = 'lgaView.php';
   bodyContent.append('state_id', state_id);
+
   if (lga_id) {
     bodyContent.append('lga_id', lga_id);
-  }
-  if (ward_id) {
-    bodyContent.append('ward_id', ward_id);
-  }
-
-  let script = 'lgaView.php';
-
-  if (lga_id) {
     script = 'wardView.php';
   }
+
   if (ward_id) {
+    bodyContent.append('ward_id', ward_id);
     script = 'pollingView.php';
   }
 
@@ -36,7 +32,7 @@ async function fetchData(state_id, lga_id, ward_id) {
 }
 
 // Necessary function to filer out inconsistencies in data
-function getObjectValues(obj) {
+function filterObjectValues(obj) {
   if (typeof obj !== 'object' || obj === null) {
     return [];
   }
@@ -52,24 +48,24 @@ function getObjectValues(obj) {
       lgas: []
     };
     const lgas = await fetchData(s.id);
-    for (let j = 0; j < getObjectValues(lgas).length; j++) {
-      const l = getObjectValues(lgas)[j];
-      console.log(`Fetching data for LGA ${l.name} (${j + 1}/${getObjectValues(lgas).length}) in ${s.name}...`);
+    for (let j = 0; j < filterObjectValues(lgas).length; j++) {
+      const l = filterObjectValues(lgas)[j];
+      console.log(`Fetching data for LGA ${l.name} (${j + 1}/${filterObjectValues(lgas).length}) in ${s.name}...`);
       let lga = {
         name: l.name,
         id: l.abbreviation,
         wards: []
       };
-      const wards = getObjectValues(await fetchData(s.id, l.abbreviation));
-      for (let k = 0; k < getObjectValues(wards).length; k++) {
-        const w = getObjectValues(wards)[k];
-        console.log(`Fetching data for ward ${w.name} (${k + 1}/${getObjectValues(wards).length}) in LGA ${l.name}...`);
+      const wards = filterObjectValues(await fetchData(s.id, l.abbreviation));
+      for (let k = 0; k < filterObjectValues(wards).length; k++) {
+        const w = filterObjectValues(wards)[k];
+        console.log(`Fetching data for ward ${w.name} (${k + 1}/${filterObjectValues(wards).length}) in LGA ${l.name}...`);
         let ward = {
           name: w.name,
           id: w.abbreviation,
           punits: []
         };
-        const pollingUnits = getObjectValues(await fetchData(s.id, l.abbreviation, w.id));
+        const pollingUnits = filterObjectValues(await fetchData(s.id, l.abbreviation, w.id));
         for (const p of pollingUnits) {
           ward.punits.push({
             name: p.name,
